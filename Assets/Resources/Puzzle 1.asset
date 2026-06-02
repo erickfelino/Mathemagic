@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Puzzle 1
   m_EditorClassIdentifier: Assembly-CSharp::MathPuzzleData
   puzzleName: Puzzle 1
-  targetValue: 5
+  targetValue: 3
   timeLimitSeconds: 2000
   numbers: 020000000300000004000000
   operators: 0000000001000000

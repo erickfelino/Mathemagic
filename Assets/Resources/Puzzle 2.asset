@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71466f47b0a30f04e87aaaf62e45fe4a, type: 3}
   m_Name: Puzzle 2
   m_EditorClassIdentifier: Assembly-CSharp::MathPuzzleData
-  puzzleName: 
-  targetValue: 0
-  timeLimitSeconds: 0
-  numbers: 
-  operators: 
+  puzzleName: Puzzle 2
+  targetValue: 10
+  timeLimitSeconds: 5
+  numbers: 01000000030000000400000002000000
+  operators: 020000000000000001000000
   hint: 
