@@ -1,4 +1,6 @@
 using UnityEngine;
+using StarterAssets;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Collider))]
 public class PuzzleWorldInteractable : MonoBehaviour
@@ -15,6 +17,8 @@ public class PuzzleWorldInteractable : MonoBehaviour
 
     private bool playerInside = false;
     private PlayerPuzzleInteractor currentPlayerInteractor;
+    private StarterAssetsInputs playerInputs;
+    private PlayerInput playerInputComponent;
 
     public bool IsSolved => solved;
     public MathPuzzleData PuzzleData => puzzleData;
@@ -48,6 +52,10 @@ public class PuzzleWorldInteractable : MonoBehaviour
             currentPlayerInteractor.SetCurrentPuzzle(this);
         }
 
+        // cache player input component so we can enable/disable it while puzzle is open
+        playerInputs = other.GetComponentInChildren<StarterAssetsInputs>();
+        playerInputComponent = other.GetComponent<PlayerInput>();
+
         if (interactionPrompt != null)
             interactionPrompt.SetActive(true);
     }
@@ -65,6 +73,9 @@ public class PuzzleWorldInteractable : MonoBehaviour
             currentPlayerInteractor = null;
         }
 
+        playerInputs = null;
+        playerInputComponent = null;
+
         if (interactionPrompt != null)
             interactionPrompt.SetActive(false);
     }
@@ -80,7 +91,31 @@ public class PuzzleWorldInteractable : MonoBehaviour
             return;
         }
 
+        // hide prompt and disable player controls so they can't move while solving
+        if (interactionPrompt != null)
+            interactionPrompt.SetActive(false);
+
+
+        if (playerInputs != null)
+            playerInputs.SetInputEnabled(false);
+
+        if (playerInputComponent != null)
+            playerInputComponent.enabled = false;
+
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
         boardController.OpenPuzzle(puzzleData, this);
+    }
+
+    // Called by the board controller when the puzzle UI is closed
+    public void OnPuzzleClosed()
+    {
+        if (playerInputs != null)
+            playerInputs.SetInputEnabled(true);
+
+        if (playerInputComponent != null)
+            playerInputComponent.enabled = true;
     }
 
     public void NotifyPuzzleResolved(MathBoardController.PuzzleOutcome outcome, double result, System.Collections.Generic.List<string> expressionTerms)

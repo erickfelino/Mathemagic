@@ -21591,7 +21591,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac907ebc1da2dac4b9d2b80a8a076c00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MathBoardController
-  boardRoot: {fileID: 458767778}
+  boardRoot: {fileID: 495609224}
   boardCanvasGroup: {fileID: 495609228}
   slotsContainer: {fileID: 2107829957}
   poolContainer: {fileID: 39747631}

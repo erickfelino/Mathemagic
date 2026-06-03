@@ -63,6 +63,12 @@ public class MathBoardController : MonoBehaviour
             if (boardRoot != null)
                 boardRoot.SetActive(false);
 
+            // notify source that the puzzle UI was closed so it can restore player control
+            if (currentSource != null)
+            {
+                currentSource.OnPuzzleClosed();
+            }
+
             currentPuzzle = null;
             currentSource = null;
         }
