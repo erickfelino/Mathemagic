@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MathPuzzleData
   puzzleName: Puzzle 2
   targetValue: 10
-  timeLimitSeconds: 5
+  timeLimitSeconds: 100000
   numbers: 01000000030000000400000002000000
   operators: 020000000000000001000000
   hint: 

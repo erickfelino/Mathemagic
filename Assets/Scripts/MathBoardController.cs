@@ -1,11 +1,20 @@
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
-using Unity.Multiplayer.Center.Common;
 
 public class MathBoardController : MonoBehaviour
 {
+    public enum PuzzleOutcome
+    {
+        Fail,
+        Success,
+        Mastery
+    }
+
+    public event Action<MathPuzzleData, PuzzleOutcome, double, List<string>> OnPuzzleResolved;
+
     [Header("UI Root")]
     [SerializeField] private GameObject boardRoot;
     [SerializeField] private CanvasGroup boardCanvasGroup;
@@ -27,16 +36,12 @@ public class MathBoardController : MonoBehaviour
 
     private readonly List<MathSlotView> slots = new List<MathSlotView>();
     private MathPuzzleData currentPuzzle;
-    [SerializeField] private MathPuzzleData selectedPuzzle;
+    private PuzzleWorldInteractable currentSource;
 
-    public void Awake()
-    {
-        OpenPuzzle(selectedPuzzle);
-    }
-
-    public void OpenPuzzle(MathPuzzleData puzzle)
+    public void OpenPuzzle(MathPuzzleData puzzle, PuzzleWorldInteractable source)
     {
         currentPuzzle = puzzle;
+        currentSource = source;
 
         if (boardRoot != null)
             boardRoot.SetActive(true);
@@ -51,12 +56,16 @@ public class MathBoardController : MonoBehaviour
         BuildPuzzleUI();
     }
 
-    public void ClosePuzzle()
-    {
-        ClearAll();
-        if (boardRoot != null)
-            boardRoot.SetActive(false);
-    }
+        public void ClosePuzzle()
+        {
+            ClearAll();
+
+            if (boardRoot != null)
+                boardRoot.SetActive(false);
+
+            currentPuzzle = null;
+            currentSource = null;
+        }
 
     public void ClearAll()
     {
@@ -110,9 +119,10 @@ public class MathBoardController : MonoBehaviour
         }
     }
 
-    public void OnDonePressed()
+        public void OnDonePressed()
     {
         List<MathTokenView> expression = new List<MathTokenView>();
+        List<string> expressionTerms = new List<string>();
 
         foreach (MathSlotView slot in slots)
         {
@@ -123,6 +133,7 @@ public class MathBoardController : MonoBehaviour
             }
 
             expression.Add(slot.CurrentToken);
+            expressionTerms.Add(slot.CurrentToken.name);
         }
 
         if (!MathExpressionValidator.TryEvaluate(expression, out double result, out string error))
@@ -135,18 +146,28 @@ public class MathBoardController : MonoBehaviour
             resultText.text = $"Resultado: {result:0.##}";
 
         double target = currentPuzzle.targetValue;
-        if (Math.Abs(result - target) < 0.0001)
-        {
-            SetFeedback("Perfeito! Você resolveu o puzzle.");
-        }
-        else if (result > target)
-        {
-            SetFeedback("Você passou do alvo com maestria!");
-        }
-        else
+
+        if (result < target)
         {
             SetFeedback("Resultado abaixo do alvo.");
+            return;
         }
+
+        PuzzleOutcome outcome = Math.Abs(result - target) < 0.0001
+            ? PuzzleOutcome.Success
+            : PuzzleOutcome.Mastery;
+
+        if (outcome == PuzzleOutcome.Success)
+            SetFeedback("Perfeito! Você resolveu o puzzle.");
+        else
+            SetFeedback("Você passou do alvo com maestria!");
+
+        OnPuzzleResolved?.Invoke(currentPuzzle, outcome, result, expressionTerms);
+
+        if (currentSource != null)
+            currentSource.NotifyPuzzleResolved(outcome, result, expressionTerms);
+
+        ClosePuzzle();
     }
 
     public void OnClearPressed()
