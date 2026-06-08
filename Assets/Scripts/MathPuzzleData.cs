@@ -6,6 +6,9 @@ public class MathPuzzleData : ScriptableObject
 {
     public string puzzleName;
     public int targetValue;
+
+    [Header("Timing")]
+    public bool hasTimeLimit = false;
     public float timeLimitSeconds = 0f;
 
     public List<int> numbers = new List<int>();

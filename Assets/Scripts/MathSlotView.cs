@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class MathSlotView : MonoBehaviour, IDropHandler
 {
@@ -38,17 +39,40 @@ public class MathSlotView : MonoBehaviour, IDropHandler
         if (token == null || !CanAccept(token))
             return;
 
-        if (CurrentToken != null && CurrentToken != token)
+        MathSlotView previousSlot = token.CurrentSlot ?? token.OriginSlot;
+        MathTokenView occupying = CurrentToken;
+
+        // If token already occupies this slot, nothing to do
+        if (occupying == token)
+            return;
+
+        // If there's an occupying token, handle swap or return-to-home
+        if (occupying != null && occupying != token)
         {
-            CurrentToken.ReturnToHome();
+            if (previousSlot != null)
+            {
+                // Swap: occupying token moves to previous slot with animation
+                CurrentToken = token;
+                previousSlot.CurrentToken = occupying;
+                
+                // Token being placed goes without animation (user dragged it)
+                token.PlaceInSlot(this);
+                // Occupying token animates to the now-free slot
+                occupying.PlaceInSlotAnimated(previousSlot, 0.3f);
+                return;
+            }
+            else
+            {
+                // Token came from pool/home; send occupying back to pool
+                occupying.ReturnToHomeAnimated(0.3f);
+            }
         }
 
+        // Normal placement: clear token's previous slot reference and place here
         CurrentToken = token;
 
-        if (token.CurrentSlot != null && token.CurrentSlot != this)
-        {
-            token.CurrentSlot.ClearToken(false);
-        }
+        if (previousSlot != null && previousSlot != this)
+            previousSlot.CurrentToken = null;
 
         token.PlaceInSlot(this);
     }
@@ -62,7 +86,7 @@ public class MathSlotView : MonoBehaviour, IDropHandler
         CurrentToken = null;
 
         if (returnToHome)
-            token.ReturnToHome();
+            token.ReturnToHomeAnimated(0.3f);
     }
 
     public void SetHighlight(bool active)
