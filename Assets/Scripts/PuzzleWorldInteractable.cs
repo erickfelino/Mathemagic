@@ -25,7 +25,7 @@ public class PuzzleWorldInteractable : MonoBehaviour
 
     private void Awake()
     {
-        Collider col = GetComponent<Collider>();
+        BoxCollider col = GetComponent<BoxCollider>();
         if (col != null)
             col.isTrigger = true;
     }
@@ -129,7 +129,7 @@ public class PuzzleWorldInteractable : MonoBehaviour
         if (interactionPrompt != null)
             interactionPrompt.SetActive(false);
 
-        Collider col = GetComponent<Collider>();
+        BoxCollider col = GetComponent<BoxCollider>();
         if (col != null)
             col.enabled = false;
 
