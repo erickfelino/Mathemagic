@@ -36,7 +36,7 @@ public static class MathExpressionValidator
         {
             if (token == null)
             {
-                error = "Há espaços vazios na equação.";
+                error = "Há espaços vazios nos campos.";
                 return false;
             }
 

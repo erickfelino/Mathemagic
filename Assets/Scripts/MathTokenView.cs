@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using TMPro;
+using DG.Tweening;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(CanvasGroup))]
 public class MathTokenView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
@@ -12,6 +14,7 @@ public class MathTokenView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     public MathOperatorKind OperatorValue { get; private set; }
 
     public MathSlotView CurrentSlot { get; private set; }
+    public MathSlotView OriginSlot { get; private set; }
     public Transform HomeParent { get; private set; }
 
     private RectTransform rectTransform;
@@ -19,6 +22,7 @@ public class MathTokenView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     private CanvasGroup canvasGroup;
 
     private Vector3 originalLocalPos;
+    private Tween movementTween;
 
     private void Awake()
     {
@@ -44,7 +48,10 @@ public class MathTokenView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         HomeParent = homeParent;
 
         if (labelText != null)
+        {
             labelText.text = GetOperatorSymbol(op);
+            labelText.color = GetOperatorColor(op);
+        }
     }
 
     public void SetCurrentSlot(MathSlotView slot)
@@ -57,16 +64,113 @@ public class MathTokenView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         if (HomeParent == null)
             return;
 
-        transform.SetParent(HomeParent, false);
-        transform.localPosition = originalLocalPos;
+        transform.SetParent(HomeParent, true);
+
+        int insertIndex = HomeParent.childCount;
+        if (Kind == MathTokenKind.Number)
+        {
+            insertIndex = 0;
+            for (int i = 0; i < HomeParent.childCount; i++)
+            {
+                var child = HomeParent.GetChild(i);
+                var tv = child.GetComponent<MathTokenView>();
+                if (tv == null) continue;
+                if (tv.Kind == MathTokenKind.Number)
+                    insertIndex = i + 1;
+                else
+                    break;
+            }
+        }
+        transform.SetSiblingIndex(insertIndex);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(HomeParent as RectTransform);
+
         CurrentSlot = null;
+        OriginSlot = null;
+    }
+
+    public void ReturnToHomeAnimated(float duration = 0.3f)
+    {
+        if (HomeParent == null)
+            return;
+
+        movementTween?.Kill();
+
+        Transform originalParent = rectTransform.parent;
+        Transform overlayParent = canvas != null ? canvas.transform : originalParent;
+        Vector3 worldStart = rectTransform.position;
+
+        int insertIndex = HomeParent.childCount;
+        if (Kind == MathTokenKind.Number)
+        {
+            insertIndex = 0;
+            for (int i = 0; i < HomeParent.childCount; i++)
+            {
+                var child = HomeParent.GetChild(i);
+                var tv = child.GetComponent<MathTokenView>();
+                if (tv == null) continue;
+                if (tv.Kind == MathTokenKind.Number)
+                    insertIndex = i + 1;
+                else
+                    break;
+            }
+        }
+
+        transform.SetParent(HomeParent, false);
+        transform.SetSiblingIndex(insertIndex);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(HomeParent as RectTransform);
+        Vector3 worldEnd = rectTransform.position;
+
+        transform.SetParent(overlayParent, true);
+        rectTransform.position = worldStart;
+
+        movementTween = rectTransform.DOMove(worldEnd, duration).SetEase(Ease.OutCubic)
+            .OnComplete(() =>
+            {
+                transform.SetParent(HomeParent, false);
+                transform.SetSiblingIndex(insertIndex);
+                rectTransform.localPosition = Vector3.zero;
+                CurrentSlot = null;
+                OriginSlot = null;
+            });
     }
 
     public void PlaceInSlot(MathSlotView slot)
     {
-        CurrentSlot = slot;
+        if (slot == null)
+            return;
+
         transform.SetParent(slot.transform, false);
         transform.localPosition = Vector3.zero;
+        CurrentSlot = slot;
+        OriginSlot = null;
+    }
+
+    public void PlaceInSlotAnimated(MathSlotView slot, float duration = 0.3f)
+    {
+        if (slot == null)
+            return;
+
+        movementTween?.Kill();
+
+        Transform originalParent = rectTransform.parent;
+        Transform overlayParent = canvas != null ? canvas.transform : originalParent;
+        Vector3 worldStart = rectTransform.position;
+
+        transform.SetParent(slot.transform, false);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(slot.transform as RectTransform);
+        Vector3 worldEnd = rectTransform.position;
+
+        transform.SetParent(overlayParent, true);
+        rectTransform.position = worldStart;
+
+        CurrentSlot = slot;
+        movementTween = rectTransform.DOMove(worldEnd, duration).SetEase(Ease.OutCubic)
+            .OnComplete(() =>
+            {
+                transform.SetParent(slot.transform, false);
+                rectTransform.localPosition = Vector3.zero;
+                OriginSlot = null;
+            });
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -75,6 +179,7 @@ public class MathTokenView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
         if (CurrentSlot != null)
         {
+            OriginSlot = CurrentSlot;
             CurrentSlot.ClearToken(false);
             CurrentSlot = null;
         }
@@ -96,7 +201,7 @@ public class MathTokenView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
         if (CurrentSlot == null)
         {
-            ReturnToHome();
+            ReturnToHomeAnimated(0.3f);
         }
     }
 
@@ -109,6 +214,18 @@ public class MathTokenView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
             MathOperatorKind.Multiply => "×",
             MathOperatorKind.Divide => "÷",
             _ => "?"
+        };
+    }
+
+    private Color GetOperatorColor(MathOperatorKind op)
+    {
+        return op switch
+        {
+            MathOperatorKind.Add => new Color32(0, 65, 255, 255), // blue
+            MathOperatorKind.Subtract => new Color32(220, 20, 60, 255), // red (crimson-like)
+            MathOperatorKind.Multiply => new Color32(255, 215, 0, 255), // yellow (gold)
+            MathOperatorKind.Divide => new Color32(255, 165, 0, 255), // orange
+            _ => Color.white
         };
     }
 }

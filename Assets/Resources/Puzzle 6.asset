@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71466f47b0a30f04e87aaaf62e45fe4a, type: 3}
+  m_Name: Puzzle 6
+  m_EditorClassIdentifier: Assembly-CSharp::MathPuzzleData
+  puzzleName: Puzzle 6
+  targetValue: 12
+  hasTimeLimit: 1
+  timeLimitSeconds: 40
+  numbers: 0300000003000000fbfffffffeffffff0400000001000000
+  operators: 0300000000000000010000000200000003000000
+  hint: 
