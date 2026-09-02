@@ -145,7 +145,7 @@ public class MathBoardController : MonoBehaviour
         {
             if (slot.CurrentToken == null)
             {
-                SetFeedback("Complete todos os espaços.");
+                SetFeedback("Complete todos os campos");
                 return;
             }
 
@@ -166,7 +166,7 @@ public class MathBoardController : MonoBehaviour
 
         if (result < target)
         {
-            SetFeedback("Resultado abaixo do alvo.");
+            SetFeedback("Resultado abaixo do objetivo");
             return;
         }
 
@@ -193,7 +193,7 @@ public class MathBoardController : MonoBehaviour
             slot.ClearToken(true);
 
         if (feedbackText != null)
-            feedbackText.text = "Equação limpa.";
+            feedbackText.text = "Lousa limpa";
     }
 
     private void StartTimer()
